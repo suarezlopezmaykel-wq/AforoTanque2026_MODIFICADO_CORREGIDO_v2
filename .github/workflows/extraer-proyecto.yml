@@ -46,6 +46,10 @@ jobs:
         shell: bash
         run: |
           set -euxo pipefail
+          # El ZIP trae un workflow de compilación que no puede ser creado
+          # por el GITHUB_TOKEN de este workflow. Lo instalaremos después
+          # mediante la conexión GitHub con los permisos adecuados.
+          rm -f .github/workflows/compilar.yml
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
