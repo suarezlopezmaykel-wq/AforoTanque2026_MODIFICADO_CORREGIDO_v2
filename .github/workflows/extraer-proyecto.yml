@@ -2,6 +2,10 @@ name: Extraer proyecto Android
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - 'AforoTanque2026_MODIFICADO_CORREGIDO_v2.zip'
+      - '.github/workflows/extraer-proyecto.yml'
 
 permissions:
   contents: write
@@ -15,7 +19,7 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Extraer ZIP
+      - name: Extraer ZIP y localizar proyecto
         shell: bash
         run: |
           set -euxo pipefail
@@ -24,22 +28,19 @@ jobs:
           rm -rf /tmp/aforo-extraido
           mkdir -p /tmp/aforo-extraido
           unzip -q "$ZIP" -d /tmp/aforo-extraido
-          echo "Contenido del ZIP:"
-          find /tmp/aforo-extraido -maxdepth 4 -type f | sort | head -300
+          echo "=== CONTENIDO DEL ZIP ==="
+          find /tmp/aforo-extraido -type f | sort | head -500
 
-      - name: Localizar y copiar proyecto
-        shell: bash
-        run: |
-          set -euxo pipefail
           SETTINGS="$(find /tmp/aforo-extraido -type f \( -name settings.gradle.kts -o -name settings.gradle \) -print -quit)"
           test -n "$SETTINGS"
           PROJECT_ROOT="$(dirname "$SETTINGS")"
-          echo "Proyecto: $PROJECT_ROOT"
+          echo "=== PROYECTO ENCONTRADO: $PROJECT_ROOT ==="
+
           cp -a "$PROJECT_ROOT"/. .
           test -f settings.gradle.kts -o -f settings.gradle
           test -d app
-          echo "Proyecto Android copiado correctamente."
-          find . -maxdepth 3 -type f ! -path './.git/*' ! -name '*.zip' | sort | head -300
+          echo "=== PROYECTO COPIADO ==="
+          find . -maxdepth 4 -type f ! -path './.git/*' ! -name '*.zip' | sort | head -500
 
       - name: Guardar proyecto en main
         shell: bash
