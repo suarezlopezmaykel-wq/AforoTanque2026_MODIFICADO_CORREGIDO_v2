@@ -9,61 +9,45 @@ permissions:
 jobs:
   extraer:
     runs-on: ubuntu-latest
-
     steps:
       - name: Descargar repositorio
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Instalar unzip
-        run: sudo apt-get update && sudo apt-get install -y unzip
-
-      - name: Extraer ZIP y localizar proyecto
+      - name: Extraer ZIP
         shell: bash
         run: |
-          set -e
+          set -euxo pipefail
           ZIP="$(find . -maxdepth 1 -type f -iname '*.zip' -print -quit)"
-          if [ -z "$ZIP" ]; then
-            echo "No se encontró ningún ZIP en la raíz del repositorio."
-            exit 1
-          fi
-
+          test -n "$ZIP"
           rm -rf /tmp/aforo-extraido
           mkdir -p /tmp/aforo-extraido
           unzip -q "$ZIP" -d /tmp/aforo-extraido
+          echo "Contenido del ZIP:"
+          find /tmp/aforo-extraido -maxdepth 4 -type f | sort | head -300
 
-          SETTINGS="$(find /tmp/aforo-extraido -type f \( -name settings.gradle.kts -o -name settings.gradle \) -print -quit)"
-          if [ -z "$SETTINGS" ]; then
-            echo "No se encontró settings.gradle.kts ni settings.gradle dentro del ZIP."
-            echo "Contenido extraído:"
-            find /tmp/aforo-extraido -maxdepth 3 -type f | head -200
-            exit 1
-          fi
-
-          PROJECT_ROOT="$(dirname "$SETTINGS")"
-          echo "Proyecto encontrado en: $PROJECT_ROOT"
-
-          cp -a "$PROJECT_ROOT"/. .
-
-          echo "Archivos del proyecto disponibles en el repositorio:"
-          find . -maxdepth 3 -type f \
-            ! -path './.git/*' \
-            ! -name '*.zip' | sort | head -300
-
-      - name: Guardar proyecto extraído
+      - name: Localizar y copiar proyecto
         shell: bash
         run: |
-          set -e
+          set -euxo pipefail
+          SETTINGS="$(find /tmp/aforo-extraido -type f \( -name settings.gradle.kts -o -name settings.gradle \) -print -quit)"
+          test -n "$SETTINGS"
+          PROJECT_ROOT="$(dirname "$SETTINGS")"
+          echo "Proyecto: $PROJECT_ROOT"
+          cp -a "$PROJECT_ROOT"/. .
+          test -f settings.gradle.kts -o -f settings.gradle
+          test -d app
+          echo "Proyecto Android copiado correctamente."
+          find . -maxdepth 3 -type f ! -path './.git/*' ! -name '*.zip' | sort | head -300
+
+      - name: Guardar proyecto en main
+        shell: bash
+        run: |
+          set -euxo pipefail
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-
           git add -A
-
-          if git diff --cached --quiet; then
-            echo "No hay cambios nuevos que guardar."
-            exit 0
-          fi
-
-          git commit -m "Extraer proyecto Android desde ZIP"
-          git push origin main
+          git status --short
+          git commit -m "Extraer proyecto Android desde ZIP" || echo "No hay cambios para commit."
+          git push origin HEAD:main
