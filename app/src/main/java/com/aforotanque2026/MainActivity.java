@@ -126,7 +126,7 @@ public class MainActivity extends Activity {
     }
 
     private double val(EditText e) {
-        String s = e.getText().toString().trim().replace(',', '.');
+        String s = e.getText().toString().trim().toLowerCase(Locale.US).replace("cm", "").trim().replace(',', '.');
         if (s.isEmpty() || s.equals(".")) return 0.0;
         return Double.parseDouble(s);
     }
