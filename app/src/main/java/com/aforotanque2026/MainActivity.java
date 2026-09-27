@@ -53,9 +53,9 @@ public class MainActivity extends Activity {
         info.setPadding(0, 10, 0, 18);
         main.addView(info);
 
-        diameterInput = field("Diámetro", "0.00");
-        lengthInput = field("Largo", "0.00");
-        levelInput = field("Altura del líquido", "0.00");
+        diameterInput = field("Diámetro", "0 cm");
+        lengthInput = field("Largo", "0 cm");
+        levelInput = field("Altura del líquido", "0 cm");
         main.addView(row("Diámetro", diameterInput));
         main.addView(row("Largo", lengthInput));
         main.addView(row("Altura", levelInput));
